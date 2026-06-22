@@ -19,6 +19,10 @@ function formatRupiah(amount: number): string {
   return amount.toLocaleString("id-ID");
 }
 
+function formatDate(date: Date): string {
+  return date.toLocaleDateString("id-ID", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
 bot.command("start", (ctx) =>
   ctx.reply(
     "Halo! Catat transaksi dengan format:\n" +
@@ -27,6 +31,8 @@ bot.command("start", (ctx) =>
       "Command lain:\n" +
       "/saldo - lihat saldo\n" +
       "/ringkasan [hari|minggu|bulan] - ringkasan\n" +
+      "/riwayat [jumlah] - daftar transaksi terbaru (default 10)\n" +
+      "/edit -50000 makan malam - ubah transaksi terakhir\n" +
       "/hapus - hapus transaksi terakhir"
   )
 );
@@ -89,6 +95,55 @@ bot.command("ringkasan", async (ctx) => {
   }
 
   await ctx.reply(lines.join("\n"));
+});
+
+bot.command("riwayat", async (ctx) => {
+  const rawLimit = Number(ctx.match?.trim());
+  const limit = Number.isInteger(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, 50) : 10;
+
+  const transactions = await Transaction.find().sort({ createdAt: -1 }).limit(limit);
+  if (transactions.length === 0) {
+    await ctx.reply("Belum ada transaksi.");
+    return;
+  }
+
+  const lines = transactions.map((t) => {
+    const sign = t.type === "income" ? "+" : "-";
+    return `${formatDate(t.date)} | ${sign}Rp${formatRupiah(t.amount)} (${t.category}${
+      t.note ? ", " + t.note : ""
+    })`;
+  });
+
+  await ctx.reply(lines.join("\n"));
+});
+
+bot.command("edit", async (ctx) => {
+  const last = await Transaction.findOne().sort({ createdAt: -1 });
+  if (!last) {
+    await ctx.reply("Tidak ada transaksi untuk diedit.");
+    return;
+  }
+
+  const parsed = parseEntry(ctx.match ?? "");
+  if (!parsed) {
+    await ctx.reply(
+      "Format tidak dikenali. Contoh: /edit -60000 makan malam"
+    );
+    return;
+  }
+
+  last.type = parsed.type;
+  last.amount = parsed.amount;
+  last.category = parsed.category;
+  last.note = parsed.note;
+  await last.save();
+
+  const sign = parsed.type === "income" ? "+" : "-";
+  await ctx.reply(
+    `Diperbarui: ${sign}Rp${formatRupiah(parsed.amount)} (${parsed.category}${
+      parsed.note ? ", " + parsed.note : ""
+    })`
+  );
 });
 
 bot.command("hapus", async (ctx) => {
