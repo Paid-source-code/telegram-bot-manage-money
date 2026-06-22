@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/src/index.js",
+    "set-webhook": "tsx src/setWebhook.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
