@@ -23,19 +23,19 @@ function formatDate(date: Date): string {
   return date.toLocaleDateString("id-ID", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
-bot.command("start", (ctx) =>
-  ctx.reply(
-    "Halo! Catat transaksi dengan format:\n" +
-      "-50000 makan siang ayam\n" +
-      "+5000000 gaji bulanan\n\n" +
-      "Command lain:\n" +
-      "/saldo - lihat saldo\n" +
-      "/ringkasan [hari|minggu|bulan] - ringkasan\n" +
-      "/riwayat [jumlah] - daftar transaksi terbaru (default 10)\n" +
-      "/edit -50000 makan malam - ubah transaksi terakhir\n" +
-      "/hapus - hapus transaksi terakhir"
-  )
-);
+const HELP_TEXT =
+  "Halo! Catat transaksi dengan format:\n" +
+  "-50000 makan siang ayam\n" +
+  "+5000000 gaji bulanan\n\n" +
+  "Command lain:\n" +
+  "/saldo - lihat saldo\n" +
+  "/ringkasan [hari|minggu|bulan] - ringkasan\n" +
+  "/riwayat [jumlah] - daftar transaksi terbaru (default 10)\n" +
+  "/edit -50000 makan malam - ubah transaksi terakhir\n" +
+  "/hapus - hapus transaksi terakhir\n" +
+  "/help - lihat semua command";
+
+bot.command(["start", "help"], (ctx) => ctx.reply(HELP_TEXT));
 
 bot.command("saldo", async (ctx) => {
   const [{ total: income = 0 } = {}] = await Transaction.aggregate([
